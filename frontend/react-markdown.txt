@@ -1,0 +1,2 @@
+// Add react-markdown to render markdown in the idea result
+// Usage: import ReactMarkdown from 'react-markdown'

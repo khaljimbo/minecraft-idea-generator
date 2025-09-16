@@ -1,0 +1,63 @@
+.generating-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+.generating-bar::after {
+  content: '';
+  position: absolute;
+  left: -40%;
+  top: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(192,192,192,0.5), transparent);
+  animation: slide-bar 1.2s linear infinite;
+}
+@keyframes slide-bar {
+  0% { left: -40%; }
+  100% { left: 100%; }
+}
+@import "tailwindcss";
+
+/* Minimal base styles — keep everything Tailwind-driven from here */
+html, body {
+  height: 100%;
+}
+/* reset default spacing and box sizing so the background covers the viewport */
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+@layer base {
+  body {
+    @apply bg-stone-900;
+  }
+}
+
+.minecraft-label {
+  font-family: 'Press Start 2P', monospace;
+  letter-spacing: 1px;
+}
+
+.minecraft-footer {
+  height: 100px;
+  width: 100vw;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 50;
+  background: url('./assets/minecraft-footer.png') repeat-x center bottom;
+  background-size: auto 100px;
+  image-rendering: pixelated;
+  border-top: 4px solid #4e9a2d;
+  box-shadow: 0 -4px 16px #3e2c13;
+}
