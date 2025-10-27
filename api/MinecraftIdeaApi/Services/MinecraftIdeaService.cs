@@ -11,6 +11,7 @@ public class CloudflareAiOptions
     public string AccountId { get; set; } = string.Empty;
     public string ApiToken { get; set; } = string.Empty;
     public string Model { get; set; } = string.Empty;
+    public string ImageModel { get; set; } = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
 }
 
 public class MinecraftIdeaService : IMinecraftIdeaService
@@ -100,6 +101,54 @@ public class MinecraftIdeaService : IMinecraftIdeaService
         }
         catch { /* fallback to default idea */ }
 
-        return new MinecraftIdeaResponse { Idea = idea };
+        // Generate image mockup
+        string? imageUrl = null;
+        try
+        {
+            imageUrl = await GenerateImageAsync(theme, idea, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Failed to generate image, continuing without it");
+        }
+
+        return new MinecraftIdeaResponse { Idea = idea, ImageUrl = imageUrl };
+    }
+
+    private async Task<string?> GenerateImageAsync(string theme, string ideaText, CancellationToken ct)
+    {
+        // Create a Minecraft-style image prompt from the actual build idea
+        var imagePrompt = $"Minecraft style blocky 3D render: {ideaText}. Cubic blocks, pixelated textures, isometric view, vibrant colors, game screenshot aesthetic";
+        
+        var payload = new { prompt = imagePrompt };
+        var json = JsonSerializer.Serialize(payload);
+
+        _logger?.LogInformation("Generating image with prompt: {Prompt}", imagePrompt);
+
+        var client = _httpClientFactory.CreateClient("CloudflareAi");
+
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post,
+            $"https://api.cloudflare.com/client/v4/accounts/{_cfOptions.AccountId}/ai/run/{_cfOptions.ImageModel}")
+        {
+            Content = new StringContent(json)
+        };
+        httpRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _cfOptions.ApiToken);
+
+        using var response = await client.SendAsync(httpRequest, ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(ct);
+            _logger?.LogWarning("Image generation failed: {Status} - {Body}", (int)response.StatusCode, errorBody);
+            return null;
+        }
+
+        // Cloudflare AI returns the image as binary data
+        var imageBytes = await response.Content.ReadAsByteArrayAsync(ct);
+        
+        // Convert to base64 data URL
+        var base64Image = Convert.ToBase64String(imageBytes);
+        return $"data:image/png;base64,{base64Image}";
     }
 }

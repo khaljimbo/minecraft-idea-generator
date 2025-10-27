@@ -8,6 +8,7 @@ import logoImg from './assets/minecraft-idea-generator-logo.png'
 
 type IdeaResponse = {
   idea?: string
+  imageUrl?: string
   error?: string
 }
 
@@ -77,11 +78,12 @@ export default function App() {
       })
       // Handle both possible response shapes
       let idea = resp.data?.Idea || resp.data?.idea
+      let imageUrl = resp.data?.ImageUrl || resp.data?.imageUrl
       if (!idea && resp.data?.result?.response) {
         idea = resp.data.result.response
       }
       if (idea) {
-        setResult({ idea })
+        setResult({ idea, imageUrl })
       } else if (resp.data?.error) {
         setResult({ error: resp.data.error })
       } else {
@@ -162,9 +164,21 @@ export default function App() {
             style={{ opacity: 0 }}
           >
             {result.idea && (
-              <div className="font-semibold text-lg text-lime-200 minecraft-label text-left" style={{whiteSpace: 'pre-line'}}>
-                <ReactMarkdown>{result.idea}</ReactMarkdown>
-              </div>
+              <>
+                {result.imageUrl && (
+                  <div className="mb-4 flex justify-center">
+                    <img 
+                      src={result.imageUrl} 
+                      alt="Minecraft build mockup" 
+                      className="rounded-lg border-2 border-stone-500 shadow-lg max-w-full h-auto"
+                      style={{ maxHeight: '400px' }}
+                    />
+                  </div>
+                )}
+                <div className="font-semibold text-lg text-lime-200 minecraft-label text-left" style={{whiteSpace: 'pre-line'}}>
+                  <ReactMarkdown>{result.idea}</ReactMarkdown>
+                </div>
+              </>
             )}
             {result.error && <div className="text-red-500 minecraft-label">{result.error}</div>}
           </div>
